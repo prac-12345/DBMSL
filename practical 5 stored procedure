@@ -1,0 +1,58 @@
+-- Step 1: Create SM table
+CREATE TABLE SM (
+    roll NUMBER(10),
+    name VARCHAR2(50),
+    total_marks NUMBER
+);
+
+-- Step 2: Create RS table
+CREATE TABLE RS (
+    roll NUMBER(10),
+    name VARCHAR2(50),
+    class VARCHAR2(30)
+);
+
+-- Step 3: Create procedure to assign grades
+CREATE OR REPLACE PROCEDURE proc_Grade(
+    p_roll IN NUMBER,
+    p_name IN VARCHAR2,
+    p_marks IN NUMBER
+) AS
+    v_class VARCHAR2(30);
+BEGIN
+    IF p_marks BETWEEN 990 AND 1500 THEN
+        v_class := 'Distinction';
+    ELSIF p_marks BETWEEN 900 AND 989 THEN
+        v_class := 'First Class';
+    ELSIF p_marks BETWEEN 825 AND 899 THEN
+        v_class := 'Higher Second Class';
+    ELSE
+        v_class := 'Not Classified';
+    END IF;
+
+    INSERT INTO RS(roll, name, class)
+    VALUES (p_roll, p_name, v_class);
+END;
+/
+
+-- Step 4: Insert sample data (user-defined roll numbers)
+INSERT INTO SM VALUES (1, 'Tanuja', 1000);
+INSERT INTO SM VALUES (2, 'Sakshi', 960);
+INSERT INTO SM VALUES (3, 'Sayali', 850);
+INSERT INTO SM VALUES (4, 'Snehal', 800);
+COMMIT;
+
+-- Step 5: Run procedure for all students
+BEGIN
+    FOR rec IN (SELECT roll, name, total_marks FROM SM) LOOP
+        proc_Grade(rec.roll, rec.name, rec.total_marks);
+    END LOOP;
+END;
+/
+
+-- Step 6: Display results
+COLUMN roll FORMAT 9999
+COLUMN name FORMAT A15
+COLUMN class FORMAT A25
+
+SELECT * FROM RS;
