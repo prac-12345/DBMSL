@@ -1,0 +1,124 @@
+db.createCollection("student");
+
+db.student.insert({Rollno:1, name:'nikita', subject:'DMSA', marks:78});
+db.student.insert({Rollno:2, name:'kiran', subject:'OSD', marks:75});
+db.student.insert({Rollno:3, name:'komal', subject:'TOC', marks:69});
+db.student.insert({Rollno:4, name:'snehal', subject:'TOC', marks:81});
+db.student.insert({Rollno:5, name:'saurabh', subject:'TOC', marks:78});
+
+db.student.find();
+db.student.find().pretty();
+
+// Create simple index on Rollno
+db.student.ensureIndex({Rollno:1});
+
+// Create descending index on Rollno
+db.student.ensureIndex({Rollno:-1});
+
+// Create index on marks field
+db.student.ensureIndex({marks:1});
+
+db.student.getIndexes();
+
+// Using minimum index value
+db.student.find().min({Rollno:2});
+
+// Using maximum index value
+db.student.find().max({Rollno:3});
+
+// Sorting in ascending order
+db.student.find().sort({Rollno:1}).pretty();
+
+// Sorting in descending order
+db.student.find().sort({Rollno:-1}).pretty();
+
+// Minimum marks by subject
+db.student.aggregate([{$group : {_id : "$subject", marks : {$min : "$marks"}}}]);
+
+// Maximum marks by subject
+db.student.aggregate([{$group : {_id : "$subject", marks : {$max : "$marks"}}}]);
+
+// Sum of marks by subject
+db.student.aggregate([{$group : {_id : "$subject", marks : {$sum : "$marks"}}}]);
+
+// Average marks by subject
+db.student.aggregate([{$group : {_id : "$subject", marks : {$avg : "$marks"}}}]);
+
+// First marks entry by subject
+db.student.aggregate([{$group : {_id : "$subject", marks : {$first : "$marks"}}}]);
+
+// Last marks entry by subject
+db.student.aggregate([{$group : {_id : "$subject", marks : {$last : "$marks"}}}]);
+
+// Find all students with marks greater than 75
+db.student.find({marks:{$gt:75}});
+
+// Find specific subject students
+db.student.find({subject:"TOC"});
+
+// Display only Rollno and marks fields
+db.student.find({}, {Rollno:1, marks:1});
+
+db.student.stats();
+
+db.student.find().explain();
+db.student.dropIndex({Rollno:1});
+
+-------------------------------------------------------------MAP REDUCING----------------------------------------------------
+
+> use demo
+switched to db demo
+db.orders.insert({cust_id:"A123",amount: 500, status:'A'})
+WriteResult({ "nInserted" : 1 })
+
+db.orders.insert({cust_id:"A123",amount: 250, status:'A'})
+WriteResult({ "nInserted" : 1 })
+
+db.orders.insert({cust_id:"A121",amount: 200, status:'A'})
+WriteResult({ "nInserted" : 1 })
+
+db.orders.insert({cust_id:"B234",amount: 200, status:'A'})
+WriteResult({ "nInserted" : 1 })
+
+db.orders.insert({cust_id:"B234",amount: 234, status:'B'})
+WriteResult({ "nInserted" : 1 })
+
+db.orders.insert({cust_id:"A121",amount: 400, status:'D'})
+WriteResult({ "nInserted" : 1 })
+
+db.orders.insert({cust_id:"A234",amount: 400, status:'A'})
+WriteResult({ "nInserted" : 1 })
+
+ db.orders.insert({cust_id:"A234",amount: 400, status:''})
+WriteResult({ "nInserted" : 1 })
+
+db.orders.insert({cust_id:"A234",amount: 400, status:'B'})
+WriteResult({ "nInserted" : 1 })
+
+
+var mapFunction1 = function() { emit(this.cust_id, this.amount); };
+
+
+var reduceFunction1 = function(keyCustId, valuesamount) { return Array.avg(valuesamount); };
+
+
+db.orders.mapReduce(
+mapFunction1,
+reduceFunction1,
+{ out: "map_reduce_example" })
+
+
+db.map_reduce_example.find()
+
+
+{ "_id" : "A121", "value" : 600 }
+{ "_id" : "A123", "value" : 750 }
+{ "_id" : "A234", "value" : 1200 }
+{ "_id" : "B234", "value" : 434 }
+
+
+> db.orders.distinct("cust_id")
+[ "A123", "A121", "B234", "A234" ]
+
+
+
